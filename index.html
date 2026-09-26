@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#fdf7e6">
+<title>Go Up!</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="stage">
+ <div id="frame">
+  <canvas id="game" width="480" height="800" aria-label="Go Up game board"></canvas>
+
+  <div id="hud" class="hud hidden">
+    <div class="hud-row">
+      <div class="stat"><span class="stat-label">score</span><span id="score" class="stat-value">0</span></div>
+      <div class="stat"><span class="stat-label">height</span><span id="height" class="stat-value">0m</span></div>
+      <div class="stat"><span class="stat-label">coins</span><span id="coins" class="stat-value">0</span></div>
+    </div>
+    <div class="hud-row hud-right">
+      <div class="stat small"><span class="stat-label">best</span><span id="best" class="stat-value">0</span></div>
+      <button id="muteBtn" class="icon-btn" type="button" title="Mute (M)" aria-label="Toggle sound">&#128266;</button>
+    </div>
+    <div id="effects" class="effects"></div>
+  </div>
+
+  <section id="menu" class="screen">
+    <div class="card">
+      <h1 class="title">Go Up<span class="bang">!</span></h1>
+      <p class="tagline">Jump, snag coins, never look down.</p>
+
+      <div class="keys">
+        <span class="key">&#8592;</span><span class="key">&#8594;</span>
+        <span class="key wide">A</span><span class="key wide">D</span>
+        <em>steer &middot; jumping is automatic</em>
+      </div>
+
+      <ul class="legend">
+        <li><i class="chip c-spring"></i><span>Spring &mdash; super bounce</span></li>
+        <li><i class="chip c-jet"></i><span>Jetpack &mdash; fly up</span></li>
+        <li><i class="chip c-shield"></i><span>Shield &mdash; saves one fall</span></li>
+        <li><i class="chip c-magnet"></i><span>Magnet &mdash; coins come to you</span></li>
+      </ul>
+
+      <button id="playBtn" class="btn" type="button">Play</button>
+      <p class="fine">Best <strong id="menuBest">0</strong></p>
+      <p class="fine dim">or press <span class="key tiny">space</span></p>
+    </div>
+  </section>
+
+  <section id="over" class="screen hidden">
+    <div class="card">
+      <h2 class="title small">Game Over</h2>
+      <p id="newBest" class="newbest hidden">&#9733; new high score! &#9733;</p>
+
+      <div class="results">
+        <div class="result big"><span class="stat-label">score</span><span id="overScore" class="stat-value">0</span></div>
+        <div class="result"><span class="stat-label">height</span><span id="overHeight" class="stat-value">0m</span></div>
+        <div class="result"><span class="stat-label">coins</span><span id="overCoins" class="stat-value">0</span></div>
+        <div class="result"><span class="stat-label">best</span><span id="overBest" class="stat-value">0</span></div>
+      </div>
+
+      <button id="againBtn" class="btn" type="button">Play Again</button>
+      <button id="menuBtn" class="btn ghost" type="button">Menu</button>
+      <p class="fine dim">press <span class="key tiny">R</span> to jump back in</p>
+    </div>
+  </section>
+
+  <div id="touch" class="touch hidden">
+    <button id="touchLeft" class="touch-btn" type="button" aria-label="Move left">&#8592;</button>
+    <button id="touchRight" class="touch-btn" type="button" aria-label="Move right">&#8594;</button>
+  </div>
+ </div>
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/input.js"></script>
+<script src="js/particles.js"></script>
+<script src="js/art.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/level.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
