@@ -14,6 +14,9 @@ window.GOUP = window.GOUP || {};
     margin: '#f6d2d2',
     ink: '#3f3a33',
     inkSoft: 'rgba(63,58,51,0.35)',
+    cloud: 'rgba(255,255,255,0.92)',
+    cloudLine: '#bcd5ee',
+    note: '#3f3a33',
     green: '#93dd55',
     greenDark: '#4f9c2f',
     greenShade: '#c6f0a2',
@@ -37,6 +40,19 @@ window.GOUP = window.GOUP || {};
   });
 
   const FONT = '"Comic Sans MS", "Segoe Print", "Bradley Hand", cursive';
+
+  const DEFAULT_SKIN = { id: 'sprout', body: '#93dd55', shade: '#c6f0a2', extras: 'none' };
+
+  const RAINBOW = ['#ff6b6b', '#ff9a3c', '#ffd23f', '#8bd450', '#4ecdc4', '#5fb0ee', '#b18bff', '#ff6b9d'];
+
+  /* Paper themes recolour these palette slots; everything else is fixed. */
+  const THEME_KEYS = ['paper', 'grid', 'gridMajor', 'margin', 'ink', 'cloud', 'cloudLine', 'note'];
+
+  function applyTheme(theme) {
+    if (!theme) return;
+    for (let i = 0; i < THEME_KEYS.length; i++) C[THEME_KEYS[i]] = theme[THEME_KEYS[i]];
+    vignette = null;
+  }
 
   /* ------------------------------------------------------------------ *
    * hand-drawn primitives
@@ -183,8 +199,8 @@ window.GOUP = window.GOUP || {};
     shape(ctx, [
       [-46, 6], [-44, -6], [-30, -14], [-18, -8], [-8, -20],
       [6, -22], [18, -10], [32, -14], [44, -4], [46, 6]
-    ], 'rgba(255,255,255,0.92)', C.gridMajor, 2.4, 31, 1.1, false);
-    line(ctx, -46, 6, 46, 6, C.gridMajor, 2.2, 47);
+    ], C.cloud, C.cloudLine, 2.4, 31, 1.1, false);
+    line(ctx, -46, 6, 46, 6, C.cloudLine, 2.2, 47);
     ctx.restore();
   }
 
@@ -267,7 +283,7 @@ window.GOUP = window.GOUP || {};
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.globalAlpha = 0.22;
-    ctx.fillStyle = C.ink;
+    ctx.fillStyle = C.note;
     for (let i = 0; i < NOTES.length; i++) {
       const sp = 0.5;
       const y = wrapY(i * 340 + 120 - camY * sp, noteSpan);
@@ -488,7 +504,113 @@ window.GOUP = window.GOUP || {};
    * player
    * ------------------------------------------------------------------ */
 
-  function drawPlayer(ctx, p, t) {
+  function skinBody(skin, t) {
+    if (skin.rainbow) return RAINBOW[Math.floor(t * 4) % RAINBOW.length];
+    return skin.body;
+  }
+
+  function drawExtras(ctx, s, t, ink, tilt) {
+    const extras = s.extras || 'none';
+    const body = s.rainbow ? RAINBOW[Math.floor(t * 4) % RAINBOW.length] : s.body;
+    const shade = s.rainbow ? '#ffffff' : s.shade;
+
+    if (s.star) {
+      ctx.globalAlpha = 0.8;
+      for (let i = 0; i < 3; i++) {
+        const a = t * 1.4 + (i * Math.PI * 2) / 3;
+        const r = 20 + Math.sin(t * 2 + i) * 3;
+        ctx.fillStyle = C.yellow;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a) * r, -26 + Math.sin(a) * r * 0.5, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    if (extras === 'cape') {
+      const flap = Math.sin(t * 7) * 3 - tilt * 26;
+      shape(
+        ctx,
+        [
+          [-13, -42], [13, -42],
+          [17 + flap, -20], [13 + flap, 2], [5 + flap * 0.6, -6], [-4 + flap * 0.6, 1], [-12 + flap, -18]
+        ],
+        shade,
+        ink,
+        2.4,
+        131,
+        1.2,
+        true
+      );
+    }
+
+    if (extras === 'wings') {
+      const flap = 2 + Math.sin(t * 12) * 3;
+      shape(ctx, [[-16, -30], [-30, -36 - flap], [-27, -25], [-34, -21], [-19, -24]], C.white, ink, 2.2, 137, 1, true);
+      shape(ctx, [[16, -30], [30, -36 - flap], [27, -25], [34, -21], [19, -24]], C.white, ink, 2.2, 139, 1, true);
+    }
+
+    if (extras === 'antenna') {
+      const wob = Math.sin(t * 4) * 2;
+      line(ctx, 0, -45, 3 + wob, -60, ink, 2.4, 149, 0.6);
+      circle(ctx, 3 + wob, -62, 4, C.red, ink, 2.2, 151, 0.6, 10);
+    }
+
+    if (extras === 'halo') {
+      ctx.save();
+      ctx.translate(0, -56 + Math.sin(t * 3) * 1.6);
+      ctx.scale(1, 0.32);
+      circle(ctx, 0, 0, 14, null, C.yellowDark, 3.2, 157, 0.8, 16);
+      ctx.restore();
+    }
+
+    if (extras === 'crown') {
+      shape(
+        ctx,
+        [[-14, -44], [-13, -56], [-7, -49], [0, -59], [7, -49], [13, -56], [14, -44]],
+        C.yellow,
+        ink,
+        2.4,
+        163,
+        0.9,
+        true
+      );
+    }
+
+    if (extras === 'cap') {
+      const flip = tilt >= 0 ? 1 : -1;
+      shape(ctx, ellipsePts(0, -44, 16, 9, 12), C.red, ink, 2.4, 167, 0.9, false);
+      line(ctx, -16, -44, 16, -44, ink, 2.4, 169, 0.7);
+      shape(
+        ctx,
+        [[flip * 10, -46], [flip * 26, -47], [flip * 25, -41], [flip * 10, -42]],
+        C.redDark || C.red,
+        ink,
+        2.2,
+        171,
+        0.8,
+        true
+      );
+    }
+
+    if (extras === 'shades') {
+      shape(ctx, roundRectPts(-14, -35, 28, 9, 4, 2), '#3f3a33', ink, 2, 173, 0.6, true);
+      ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      ctx.fillRect(-11, -33, 4, 2);
+      ctx.fillRect(1, -33, 4, 2);
+    }
+
+    if (extras === 'bowtie') {
+      shape(ctx, [[-11, -20], [-2, -24], [-2, -16]], C.red, ink, 2, 179, 0.7, true);
+      shape(ctx, [[11, -20], [2, -24], [2, -16]], C.red, ink, 2, 181, 0.7, true);
+    }
+  }
+
+  function drawPlayer(ctx, p, t, skin) {
+    const s = skin || DEFAULT_SKIN;
+    const ink = s.ink || C.ink;
+    const body = skinBody(s, t);
+    const shade = s.rainbow ? '#ffffff' : s.shade || body;
     const cx = p.x + p.w / 2;
     const by = p.y + p.h;
 
@@ -498,10 +620,12 @@ window.GOUP = window.GOUP || {};
     ctx.rotate(p.tilt);
     ctx.scale(p.squashX * 1.1, p.squashY * 1.1);
 
+    drawExtras(ctx, s, t, ink, p.tilt);
+
     if (p.jet > 0) {
       // jetpack canister behind the body
       const flick = 1 + Math.sin(t * 30) * 0.12;
-      shape(ctx, roundRectPts(-9, -34, 18, 22, 5, 2), C.red, C.ink, 2.6, 88, 0.9, true);
+      shape(ctx, roundRectPts(-9, -34, 18, 22, 5, 2), C.red, ink, 2.6, 88, 0.9, true);
       const flame = 16 * flick * p.jetFade;
       ctx.fillStyle = C.yellow;
       ctx.beginPath();
@@ -510,7 +634,7 @@ window.GOUP = window.GOUP || {};
       ctx.lineTo(6, -13);
       ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = C.ink;
+      ctx.strokeStyle = ink;
       ctx.lineWidth = 2.2;
       ctx.stroke();
       ctx.fillStyle = 'rgba(255,120,60,0.75)';
@@ -523,35 +647,35 @@ window.GOUP = window.GOUP || {};
     }
 
     // body
-    const body = ellipsePts(0, -23, 17, 24, 18);
-    shape(ctx, body, C.green, C.ink, 2.8, 13, 1.1, true);
+    const bodyPts = ellipsePts(0, -23, 17, 24, 18);
+    shape(ctx, bodyPts, body, ink, 2.8, 13, 1.1, true);
     // belly shade
     ctx.save();
-    ctx.globalAlpha = 0.55;
-    shape(ctx, ellipsePts(0, -12, 12, 9, 12), C.greenShade, null, 0, 29, 0.8, true);
+    ctx.globalAlpha = 0.45;
+    shape(ctx, ellipsePts(0, -12, 12, 9, 12), shade, null, 0, 29, 0.8, true);
     ctx.restore();
 
     // arms
     const swing = Math.sin(t * 6) * (p.onGround ? 0 : 2) + (p.jet > 0 ? -8 : 0);
-    line(ctx, -16, -26, -24, -14 + swing, C.ink, 2.8, 41, 0.9);
-    line(ctx, 16, -26, 24, -14 - swing, C.ink, 2.8, 43, 0.9);
+    line(ctx, -16, -26, -24, -14 + swing, ink, 2.8, 41, 0.9);
+    line(ctx, 16, -26, 24, -14 - swing, ink, 2.8, 43, 0.9);
 
     // feet
-    shape(ctx, ellipsePts(-8, -3, 6, 4.2, 10), C.green, C.ink, 2.4, 53, 0.7, true);
-    shape(ctx, ellipsePts(8, -3, 6, 4.2, 10), C.green, C.ink, 2.4, 59, 0.7, true);
+    shape(ctx, ellipsePts(-8, -3, 6, 4.2, 10), body, ink, 2.4, 53, 0.7, true);
+    shape(ctx, ellipsePts(8, -3, 6, 4.2, 10), body, ink, 2.4, 59, 0.7, true);
 
     // eyes
     const look = p.look * 2.2;
-    circle(ctx, -6.5, -30, 6, C.white, C.ink, 2.2, 67, 0.7, 12);
-    circle(ctx, 6.5, -30, 6, C.white, C.ink, 2.2, 71, 0.7, 12);
-    ctx.fillStyle = C.ink;
+    circle(ctx, -6.5, -30, 6, C.white, ink, 2.2, 67, 0.7, 12);
+    circle(ctx, 6.5, -30, 6, C.white, ink, 2.2, 71, 0.7, 12);
+    ctx.fillStyle = ink;
     ctx.beginPath();
     ctx.arc(-6.5 + look, -30 + 0.6, 2.6, 0, Math.PI * 2);
     ctx.arc(6.5 + look, -30 + 0.6, 2.6, 0, Math.PI * 2);
     ctx.fill();
 
     // smile
-    ctx.strokeStyle = C.ink;
+    ctx.strokeStyle = ink;
     ctx.lineWidth = 2.4;
     ctx.beginPath();
     if (p.jet > 0) {
@@ -591,6 +715,39 @@ window.GOUP = window.GOUP || {};
       ctx.restore();
     }
   }
+
+  /** Small standalone doodle for wardrobe cards. */
+  function portrait(ctx, skin, t, w, h) {
+    const W = w || 76;
+    const H = h || 64;
+    const time = t || 0;
+    ctx.clearRect(0, 0, W, H);
+    ctx.save();
+    ctx.translate(W / 2, H - 7 + Math.sin(time * 3) * 1.2);
+    ctx.scale(0.82, 0.82);
+    drawPlayer(
+      ctx,
+      {
+        x: -19,
+        y: -50,
+        w: 38,
+        h: 50,
+        tilt: 0,
+        rot: 0,
+        look: Math.sin(time * 1.2) * 0.4,
+        squashX: 1,
+        squashY: 1,
+        jet: 0,
+        jetFade: 1,
+        shield: 0,
+        onGround: true
+      },
+      time,
+      skin
+    );
+    ctx.restore();
+  }
+
 
   /* ------------------------------------------------------------------ *
    * overlays drawn on canvas
@@ -644,9 +801,11 @@ window.GOUP = window.GOUP || {};
   G.art = {
     colors: C,
     FONT,
+    applyTheme,
     rough,
     shape,
     rectPts,
+    roundRectPts,
     ellipsePts,
     circle,
     line,
@@ -656,6 +815,7 @@ window.GOUP = window.GOUP || {};
     drawCoin,
     drawPowerup,
     drawPlayer,
+    portrait,
     drawHint,
     drawPaused,
     drawCentered

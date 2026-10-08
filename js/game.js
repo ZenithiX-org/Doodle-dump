@@ -43,14 +43,18 @@ window.GOUP = window.GOUP || {};
     score: 0,
     heightMeters: 0,
     coins: 0,
-    best: U.storage.get(G.BEST_KEY, 0) || 0,
+    best: 0,
     newBest: false,
     shake: 0,
     dieT: 0,
     jetSfxT: 0,
     hintT: 0,
-    touch: false
+    touch: false,
+    nextMark: 0,
+    coinMark: 0,
+    celebrate: 0
   };
+
 
   /* ------------------------------------------------------------------ *
    * attract mode (menu backdrop)
@@ -122,11 +126,19 @@ window.GOUP = window.GOUP || {};
       player.onGround = true;
       player.tilt = 0;
       player.look = U.clamp(Math.sin(game.time * 0.7) * 0.6, -1, 1);
-      player.squashY = 1 + Math.sin(game.time * 4) * 0.05;
+      const pop = game.celebrate > 0 ? 0.18 : 0.05;
+      player.squashY = 1 + Math.sin(game.time * 4) * pop;
       player.squashX = 2 - player.squashY;
       player.rot = 0;
     } else {
       player.y = H + 120;
+    }
+
+    if (game.celebrate > 0) {
+      game.celebrate -= dt;
+      if (U.chance(dt * 6)) {
+        particles.confetti(player.cx, player.y - 20, 3);
+      }
     }
   }
 
@@ -140,6 +152,7 @@ window.GOUP = window.GOUP || {};
     level.generateUpTo(G.START_Y - H - 300);
 
     player.reset(W / 2 - player.w / 2, G.START_Y);
+    player.skin = G.progress.equippedSkin();
     particles.clear();
 
     game.runs++;
@@ -154,14 +167,18 @@ window.GOUP = window.GOUP || {};
     game.dieT = 0;
     game.jetSfxT = 0;
     game.hintT = game.runs <= 1 ? HINT_TIME : 0;
+    game.nextMark = 0;
+    game.coinMark = 0;
+    game.celebrate = 0;
 
     G.ui.hideScreens();
     G.ui.showHud(true, game.touch);
+    G.ui.setBestHot(false);
     G.input.clear();
     G.audio.sfx('start');
   }
 
-  function toMenu() {
+  function toMenu(celebrate) {
     game.state = 'menu';
     level.reset();
     particles.clear();
@@ -171,7 +188,9 @@ window.GOUP = window.GOUP || {};
     game.score = 0;
     buildAttract();
     player.reset(W / 2 - player.w / 2, G.START_Y);
-    G.ui.showMenu(game.best);
+    player.skin = G.progress.equippedSkin();
+    game.celebrate = celebrate ? 2.2 : 0;
+    G.ui.showMenu();
     G.input.clear();
   }
 
@@ -233,19 +252,27 @@ window.GOUP = window.GOUP || {};
 
   function gameOver() {
     game.state = 'gameover';
-    if (game.score > game.best) {
-      game.best = game.score;
-      game.newBest = true;
-      U.storage.set(G.BEST_KEY, game.best);
-    }
+
+    const score = game.score;
+    const prevBest = G.progress.data.best;
+    const fresh = G.progress.recordRun(game.heightMeters, game.coins, score);
+
+    game.best = G.progress.data.best;
+    game.newBest = score > prevBest;
+
     G.ui.showOver({
-      score: game.score,
+      score: score,
       height: game.heightMeters,
       coins: game.coins,
       best: game.best,
-      newBest: game.newBest
+      newBest: game.newBest,
+      unlocks: fresh
     });
-    if (game.newBest) G.audio.sfx('best');
+
+    if (fresh.length) {
+      G.audio.sfx('best');
+      G.ui.toast('unlock', 'Unlocked: ' + fresh.map((u) => u.name).join(' + '), 'open Skins to wear it');
+    }
   }
 
   /* ------------------------------------------------------------------ *
@@ -430,10 +457,38 @@ window.GOUP = window.GOUP || {};
     level.generateUpTo(game.cameraY - 620);
     game.score = Math.max(game.score, Math.floor((G.START_Y - game.minY) / 10) + game.coins * P.coinValue);
 
+    // milestone feedback: height every 50m, coins every 50
+    const mark = Math.floor(game.heightMeters / 50);
+    if (mark > game.nextMark) {
+      game.nextMark = mark;
+      const m = mark * 50;
+      particles.popup(player.cx, player.y - 26, m + 'm!', C.blueDark);
+      particles.burst(player.cx, player.y, 10, {
+        color: C.blue,
+        kind: 'star',
+        speedMin: 60,
+        speedMax: 200,
+        grav: 380,
+        lifeMin: 0.3,
+        lifeMax: 0.6,
+        sizeMin: 2.5,
+        sizeMax: 5
+      });
+      G.audio.sfx('milestone');
+    }
+    const coinMark = Math.floor(game.coins / 50);
+    if (coinMark > game.coinMark) {
+      game.coinMark = coinMark;
+      particles.popup(player.cx, player.y - 46, coinMark * 50 + ' coins!', C.coinDark);
+    }
+
     const desired = player.y - H * 0.58;
     if (desired < game.cameraY) game.cameraY += (desired - game.cameraY) * U.smooth(9, dt);
 
     if (game.hintT > 0) game.hintT -= dt;
+
+    G.ui.setBestHot(game.score > G.progress.data.best);
+    G.ui.setLiveGoal(game.heightMeters, game.coins, game.score);
 
     if (player.y > game.cameraY + H + 40) die();
   }
@@ -579,6 +634,16 @@ window.GOUP = window.GOUP || {};
   function boot() {
     game.touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
 
+    // load lifetime progress, then carry over a high score from an older save
+    G.progress.load();
+    const legacy = U.storage.get(G.BEST_KEY, 0) || 0;
+    if (legacy > G.progress.data.best) {
+      G.progress.data.best = legacy;
+      G.progress.save();
+    }
+    game.best = G.progress.data.best;
+    G.art.applyTheme(G.progress.equippedTheme());
+
     G.ui.init({
       play: start,
       again: start,
@@ -586,6 +651,7 @@ window.GOUP = window.GOUP || {};
       mute: () => G.ui.setMuted(G.audio.toggleMute())
     });
     G.ui.setMuted(G.audio.isMuted());
+    G.ui.refreshStats();
     G.input.init({ left: document.getElementById('touchLeft'), right: document.getElementById('touchRight') });
 
     window.addEventListener('resize', resize);
@@ -596,6 +662,7 @@ window.GOUP = window.GOUP || {};
     window.addEventListener('pointerdown', () => G.audio.unlock(), { once: true });
     window.addEventListener('keydown', () => G.audio.unlock(), { once: true });
 
+    player.skin = G.progress.equippedSkin();
     resize();
     toMenu();
     window.requestAnimationFrame(loop);

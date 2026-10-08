@@ -40,6 +40,7 @@ window.GOUP = window.GOUP || {};
       this.springT = 0;
       this.dying = false;
       this.fade = 1;
+      this.skin = null;
     }
 
     get cx() {
@@ -129,7 +130,7 @@ window.GOUP = window.GOUP || {};
     }
 
     draw(ctx, t) {
-      G.art.drawPlayer(ctx, this, t);
+      G.art.drawPlayer(ctx, this, t, this.skin);
     }
   }
 

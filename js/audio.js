@@ -134,6 +134,11 @@ window.GOUP = window.GOUP || {};
       [659, 784, 988, 1319].forEach((f, i) => {
         tone({ freq: f, dur: 0.14, vol: 0.3, type: 'triangle', delay: i * 0.09 });
       });
+    },
+    milestone() {
+      [880, 1174].forEach((f, i) => {
+        tone({ freq: f, dur: 0.1, vol: 0.22, type: 'sine', delay: i * 0.07 });
+      });
     }
   };
 

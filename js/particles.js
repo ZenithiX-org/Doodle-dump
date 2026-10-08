@@ -90,6 +90,13 @@ window.GOUP = window.GOUP || {};
         ctx.rotate(p.rot);
         ctx.fillRect(-size, -size, size * 2, size * 2);
         ctx.restore();
+      } else if (p.kind === 'confetti') {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot + Math.sin(p.life * 9) * 1.2);
+        ctx.scale(1, 0.45 + 0.55 * Math.abs(Math.cos(p.life * 7)));
+        ctx.fillRect(-size * 0.8, -size * 1.3, size * 1.6, size * 2.6);
+        ctx.restore();
       } else if (p.kind === 'star') {
         ctx.save();
         ctx.translate(p.x, p.y);
@@ -130,9 +137,33 @@ window.GOUP = window.GOUP || {};
     ctx.globalAlpha = 1;
   }
 
+  function confetti(x, y, count, colors) {
+    const palette = colors || ['#ff6b6b', '#ffd23f', '#8bd450', '#5fb0ee', '#b18bff'];
+    for (let i = 0; i < count; i++) {
+      const a = U.rand(-Math.PI * 0.95, -Math.PI * 0.05);
+      const s = U.rand(180, 460);
+      spawn({
+        x: x + U.rand(-14, 14),
+        y: y + U.rand(-10, 10),
+        vx: Math.cos(a) * s,
+        vy: Math.sin(a) * s,
+        grav: 900,
+        drag: 0.9,
+        life: U.rand(0.9, 1.7),
+        size: U.rand(3.5, 6.5),
+        endSize: 2.5,
+        color: U.pick(palette),
+        kind: 'confetti',
+        rot: U.rand(0, 6.28),
+        vr: U.rand(-7, 7)
+      });
+    }
+  }
+
   G.particles = {
     spawn,
     burst,
+    confetti,
     popup,
     update,
     draw,

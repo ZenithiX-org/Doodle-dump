@@ -23,7 +23,15 @@
       <button id="muteBtn" class="icon-btn" type="button" title="Mute (M)" aria-label="Toggle sound">&#128266;</button>
     </div>
     <div id="effects" class="effects"></div>
+    <div id="nextUnlock" class="next-unlock hidden">
+      <i id="nuIcon" class="nu-icon"></i>
+      <span class="nu-name" id="nuName">—</span>
+      <span class="nu-meter"><span id="nuFill" class="nu-fill"></span></span>
+      <span class="nu-text" id="nuText">0 / 0</span>
+    </div>
   </div>
+
+  <div id="toasts" class="toasts"></div>
 
   <section id="menu" class="screen">
     <div class="card">
@@ -36,15 +44,17 @@
         <em>steer &middot; jumping is automatic</em>
       </div>
 
-      <ul class="legend">
-        <li><i class="chip c-spring"></i><span>Spring &mdash; super bounce</span></li>
-        <li><i class="chip c-jet"></i><span>Jetpack &mdash; fly up</span></li>
-        <li><i class="chip c-shield"></i><span>Shield &mdash; saves one fall</span></li>
-        <li><i class="chip c-magnet"></i><span>Magnet &mdash; coins come to you</span></li>
-      </ul>
-
       <button id="playBtn" class="btn" type="button">Play</button>
-      <p class="fine">Best <strong id="menuBest">0</strong></p>
+      <button id="menuSkinsBtn" class="btn ghost" type="button">Skins <span id="menuSkinCount" class="pill">1/16</span></button>
+
+      <div class="life-stats">
+        <div class="ls"><span class="ls-value" id="lifeHeight">0m</span><span class="ls-label">climbed</span></div>
+        <div class="ls"><span class="ls-value" id="lifeCoins">0</span><span class="ls-label">coins</span></div>
+        <div class="ls"><span class="ls-value" id="lifeRuns">0</span><span class="ls-label">runs</span></div>
+        <div class="ls"><span class="ls-value" id="lifeBest">0</span><span class="ls-label">best</span></div>
+      </div>
+
+      <p id="menuGoal" class="goal-line">next unlock loading…</p>
       <p class="fine dim">or press <span class="key tiny">space</span></p>
     </div>
   </section>
@@ -61,9 +71,42 @@
         <div class="result"><span class="stat-label">best</span><span id="overBest" class="stat-value">0</span></div>
       </div>
 
+      <div id="unlockBanner" class="unlock-banner hidden">
+        <span class="ub-stars">&#9733;</span>
+        <span class="ub-body">
+          <span class="ub-label">new unlock</span>
+          <strong id="unlockName" class="ub-name">—</strong>
+        </span>
+        <button id="unlockBtn" class="btn mini" type="button">Wear it</button>
+      </div>
+
+      <p id="overGoal" class="goal-line">—</p>
+
       <button id="againBtn" class="btn" type="button">Play Again</button>
-      <button id="menuBtn" class="btn ghost" type="button">Menu</button>
-      <p class="fine dim">press <span class="key tiny">R</span> to jump back in</p>
+      <button id="overSkinsBtn" class="btn ghost" type="button">Skins <span id="overSkinCount" class="pill">1/16</span></button>
+      <p class="fine dim">press <span class="key tiny">R</span> to jump back in &middot; <button id="overMenuBtn" class="link-btn" type="button">menu</button></p>
+    </div>
+  </section>
+
+  <section id="wardrobe" class="screen hidden">
+    <div class="card wide">
+      <header class="wardrobe-head">
+        <h2 class="title small">Wardrobe</h2>
+        <button id="wardrobeClose" class="icon-btn" type="button" aria-label="Close">&#10005;</button>
+      </header>
+
+      <p class="wardrobe-sub"><strong id="wardrobeCount">1</strong> of <span id="wardrobeTotal">16</span> unlocked</p>
+
+      <h3 class="section-label">Doodles</h3>
+      <div id="skinGrid" class="skin-grid"></div>
+
+      <h3 class="section-label">Paper</h3>
+      <div id="themeGrid" class="theme-grid"></div>
+
+      <div class="wardrobe-foot">
+        <p class="goal-line" id="wardrobeGoal">—</p>
+        <button id="wardrobeBack" class="btn" type="button">Back</button>
+      </div>
     </div>
   </section>
 
@@ -81,6 +124,7 @@
 <script src="js/art.js"></script>
 <script src="js/entities.js"></script>
 <script src="js/level.js"></script>
+<script src="js/skins.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/game.js"></script>
 </body>
